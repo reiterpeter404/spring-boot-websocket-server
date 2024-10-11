@@ -10,8 +10,10 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.socket.WebSocketSession;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -19,6 +21,7 @@ import java.util.List;
 public class MessageController {
     private static final Logger LOGGER = LoggerFactory.getLogger(MessageController.class);
     private final TradeWebSocketHandler tradeWebSocketHandler;
+    private final List<WebSocketDto> messageBuffer = new ArrayList<>();
 
     public MessageController(final TradeWebSocketHandler tradeWebSocketHandler) {
         this.tradeWebSocketHandler = tradeWebSocketHandler;
@@ -34,6 +37,7 @@ public class MessageController {
         try {
             tradeWebSocketHandler.sendMessageToClientId(sessionId, messageDto);
         } catch (IOException exception) {
+            messageBuffer.add(messageDto);
             LOGGER.error("Failed to send message to client with ID = {}", sessionId);
         }
     }
@@ -43,7 +47,18 @@ public class MessageController {
         try {
             tradeWebSocketHandler.broadcastMessage(messageDto);
         } catch (IOException exception) {
+            messageBuffer.add(messageDto);
             LOGGER.error("Failed to broadcast message.");
+        }
+    }
+
+    public void sendMessagesFromMessageBufferToReconnectedSession(final WebSocketSession session) {
+        try {
+            for (WebSocketDto messageDto : messageBuffer) {
+                tradeWebSocketHandler.sendMessageToSession(session, messageDto);
+            }
+        } catch (IOException exception) {
+            LOGGER.error("Failed to load messages from message buffer to reconnected session.");
         }
     }
 }

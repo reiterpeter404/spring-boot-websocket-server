@@ -1,10 +1,12 @@
 package com.websocket.server.handler;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.websocket.server.event.WebSocketConnectionEstablishedEvent;
 import com.websocket.server.model.WebSocketDto;
 import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.web.socket.CloseStatus;
 import org.springframework.web.socket.TextMessage;
 import org.springframework.web.socket.WebSocketSession;
@@ -18,11 +20,20 @@ public class TradeWebSocketHandler extends TextWebSocketHandler {
     private static final Logger LOGGER = LoggerFactory.getLogger(TradeWebSocketHandler.class);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private final List<WebSocketSession> sessionList = new ArrayList<>();
+    private final ApplicationEventPublisher eventPublisher;
+
+    public TradeWebSocketHandler(final ApplicationEventPublisher eventPublisher) {
+        this.eventPublisher = eventPublisher;
+    }
 
     @Override
     public void afterConnectionEstablished(final WebSocketSession session) {
         LOGGER.info("Session established: {}", session.getId());
         sessionList.add(session);
+
+        // fire reconnection event
+        final WebSocketConnectionEstablishedEvent event = new WebSocketConnectionEstablishedEvent(this, session);
+        eventPublisher.publishEvent(event);
     }
 
     @Override
@@ -57,7 +68,7 @@ public class TradeWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
-    private void sendMessageToSession(final WebSocketSession session, final WebSocketDto messageDto) throws IOException {
+    public void sendMessageToSession(final WebSocketSession session, final WebSocketDto messageDto) throws IOException {
         final String message = OBJECT_MAPPER.writeValueAsString(messageDto);
         sendDtoAsMessage(session, message);
     }

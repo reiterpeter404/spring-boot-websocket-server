@@ -1,8 +1,8 @@
 package com.websocket.server.interceptor;
 
-
 import com.websocket.server.config.WebSocketAuthConfig;
 import lombok.AllArgsConstructor;
+import lombok.NonNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -22,12 +22,11 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
     @Override
     public boolean beforeHandshake(
             final ServerHttpRequest request,
-            final ServerHttpResponse response,
-            final WebSocketHandler wsHandler,
-            final Map<String, Object> attributes
-    ) throws Exception {
+            @NonNull final ServerHttpResponse response,
+            @NonNull final WebSocketHandler wsHandler,
+            @NonNull final Map<String, Object> attributes) {
         final String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if(validateAuthenticationCredentials(authHeader)) {
+        if (validateAuthenticationCredentials(authHeader)) {
             return true;
         }
         LOGGER.error("Failed to authenticate client application.");
@@ -35,7 +34,7 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
     }
 
     private boolean validateAuthenticationCredentials(final String authHeader) {
-        if(authHeader == null || !authHeader.startsWith("Basic ")) {
+        if (authHeader == null || !authHeader.startsWith("Basic ")) {
             return false;
         }
         final String[] values = decodeAuthenticationCredentials(authHeader);
@@ -44,15 +43,15 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
 
     private String[] decodeAuthenticationCredentials(final String authHeader) {
         final String base64Credentials = authHeader.substring(6);
-        final String credentials = new String (Base64.getDecoder().decode(base64Credentials));
+        final String credentials = new String(Base64.getDecoder().decode(base64Credentials));
         return credentials.split(":", 2);
     }
 
     @Override
     public void afterHandshake(
-            final ServerHttpRequest request,
-            final ServerHttpResponse response,
-            final WebSocketHandler wsHandler,
+            @NonNull final ServerHttpRequest request,
+            @NonNull final ServerHttpResponse response,
+            @NonNull final WebSocketHandler wsHandler,
             final Exception exception
     ) {
         // not needed for this example

@@ -6,7 +6,7 @@ import org.springframework.web.socket.WebSocketSession;
 
 @Getter
 public class WebSocketConnectionEstablishedEvent extends ApplicationEvent {
-    private final WebSocketSession session;
+    private final transient WebSocketSession session;
 
     public WebSocketConnectionEstablishedEvent(final Object source, final WebSocketSession session) {
         super(source);

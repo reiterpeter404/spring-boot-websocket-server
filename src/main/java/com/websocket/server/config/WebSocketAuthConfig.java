@@ -17,15 +17,11 @@ import java.util.Objects;
 @Configuration
 @ConfigurationProperties(prefix = "websocket.authentication")
 public class WebSocketAuthConfig {
-    private Boolean credentials;
+    private Boolean enableLoginWithCredentials;
     private String username;
     private String password;
 
     public boolean checkCredentials(final String username, final String password) {
-        if (!credentials) {
-            log.warn("Service tried authorize with user credentials, but it is disabled in the application properties!");
-            return false;
-        }
         return Objects.equals(this.username, username)
                 && Objects.equals(this.password, password);
     }

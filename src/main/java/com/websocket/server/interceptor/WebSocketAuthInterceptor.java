@@ -26,7 +26,7 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
             @NonNull final WebSocketHandler wsHandler,
             @NonNull final Map<String, Object> attributes) {
         final String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (validateAuthenticationCredentials(authHeader)) {
+        if (validateAuthenticationCredentials(authHeader) && webSocketAuthConfig.getEnableLoginWithCredentials()) {
             return true;
         }
         LOGGER.error("Failed to authenticate client application.");

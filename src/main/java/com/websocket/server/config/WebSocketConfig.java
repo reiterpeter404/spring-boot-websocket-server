@@ -10,6 +10,9 @@ import org.springframework.web.socket.config.annotation.EnableWebSocket;
 import org.springframework.web.socket.config.annotation.WebSocketConfigurer;
 import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry;
 
+/**
+ * The configuration class for the websocket.
+ */
 @Configuration
 @EnableWebSocket
 @AllArgsConstructor
@@ -18,6 +21,11 @@ public class WebSocketConfig implements WebSocketConfigurer {
     private final WebSocketTokenAuthConfig webSocketTokenAuthConfig;
     private final ApplicationEventPublisher eventPublisher;
 
+    /**
+     * Register the websocket configurations to the websocket handler.
+     *
+     * @param registry the registry to add the configurations
+     */
     @Override
     public void registerWebSocketHandlers(final WebSocketHandlerRegistry registry) {
         registry

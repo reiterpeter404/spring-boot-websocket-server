@@ -8,6 +8,9 @@ import org.springframework.context.annotation.Configuration;
 
 import java.util.Objects;
 
+/**
+ * Configuration class for basic authentication.
+ */
 @Slf4j
 @Getter
 @Setter

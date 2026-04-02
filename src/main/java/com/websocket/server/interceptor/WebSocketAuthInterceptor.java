@@ -15,6 +15,9 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import java.util.Base64;
 import java.util.Map;
 
+/**
+ * The handshake interceptor to establish a connection.
+ */
 @RequiredArgsConstructor
 public class WebSocketAuthInterceptor implements HandshakeInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketAuthInterceptor.class);

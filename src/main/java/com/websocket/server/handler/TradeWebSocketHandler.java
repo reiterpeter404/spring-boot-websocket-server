@@ -26,6 +26,11 @@ public class TradeWebSocketHandler extends TextWebSocketHandler {
         this.eventPublisher = eventPublisher;
     }
 
+    /**
+     * A new client was connected to the websocket.
+     *
+     * @param session the clients session
+     */
     @Override
     public void afterConnectionEstablished(final WebSocketSession session) {
         LOGGER.info("Session established: {}", session.getId());
@@ -36,18 +41,36 @@ public class TradeWebSocketHandler extends TextWebSocketHandler {
         eventPublisher.publishEvent(event);
     }
 
+    /**
+     * A session to a client was closed.
+     *
+     * @param session the closed session
+     * @param status  the close status
+     */
     @Override
     public void afterConnectionClosed(final WebSocketSession session, @NonNull final CloseStatus status) {
         LOGGER.info("Session closed:      {}", session.getId());
         sessionList.remove(session);
     }
 
+    /**
+     * A new message was sent to the websocket server.
+     *
+     * @param session the session of the client
+     * @param message the message
+     * @throws IOException if the message cannot be converted to the DTO
+     */
     @Override
-    public void handleTextMessage(final WebSocketSession session , final TextMessage message) throws IOException {
+    public void handleTextMessage(final WebSocketSession session, final TextMessage message) throws IOException {
         final WebSocketDto webSocketDto = OBJECT_MAPPER.readValue(message.getPayload(), WebSocketDto.class);
         LOGGER.info("Received message from session {}: {}", session.getId(), webSocketDto);
     }
 
+    /**
+     * Get all session IDs connected to the websocket server.
+     *
+     * @return a list of all session IDs
+     */
     public List<String> getSessionIDs() {
         final List<String> sessionIDs = new ArrayList<>();
         for (WebSocketSession webSocketSession : sessionList) {
@@ -56,11 +79,24 @@ public class TradeWebSocketHandler extends TextWebSocketHandler {
         return sessionIDs;
     }
 
+    /**
+     * Send a message to the given client
+     *
+     * @param clientId   the client ID to send
+     * @param messageDto the message DTO to send
+     * @throws IOException if the message cannot be converted
+     */
     public void sendMessageToClientId(final String clientId, final WebSocketDto messageDto) throws IOException {
         final WebSocketSession session = sessionList.stream().filter(wsSession -> wsSession.getId().equals(clientId)).findFirst().orElseThrow(NullPointerException::new);
         sendMessageToSession(session, messageDto);
     }
 
+    /**
+     * Send a message to all connected sessions
+     *
+     * @param messageDto the message to send
+     * @throws IOException if the message cannot be converted
+     */
     public void broadcastMessage(final WebSocketDto messageDto) throws IOException {
         final String message = OBJECT_MAPPER.writeValueAsString(messageDto);
         for (WebSocketSession webSocketSession : sessionList) {
@@ -68,6 +104,13 @@ public class TradeWebSocketHandler extends TextWebSocketHandler {
         }
     }
 
+    /**
+     * Send a message to a given session
+     *
+     * @param session    the session to send the message to
+     * @param messageDto the message to send
+     * @throws IOException if the message cannot be converted
+     */
     public void sendMessageToSession(final WebSocketSession session, final WebSocketDto messageDto) throws IOException {
         final String message = OBJECT_MAPPER.writeValueAsString(messageDto);
         sendDtoAsMessage(session, message);

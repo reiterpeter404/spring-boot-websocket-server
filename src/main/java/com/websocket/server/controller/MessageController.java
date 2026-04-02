@@ -16,6 +16,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * The controller to get and send messages.
+ */
 @RestController
 @RequestMapping("/message")
 public class MessageController {
@@ -27,11 +30,22 @@ public class MessageController {
         this.tradeWebSocketHandler = tradeWebSocketHandler;
     }
 
+    /**
+     * Get all session IDs that are currently connected to the websocket server
+     *
+     * @return a list of all session IDs
+     */
     @GetMapping("/")
     public List<String> getClientConnections() {
         return tradeWebSocketHandler.getSessionIDs();
     }
 
+    /**
+     * Send a message to a given session.
+     *
+     * @param sessionId  the session ID to send the message to
+     * @param messageDto the message to send
+     */
     @PostMapping("/send/{sessionId}")
     public void sendMessageToSessionID(@PathVariable String sessionId, @RequestBody WebSocketDto messageDto) {
         try {
@@ -42,6 +56,11 @@ public class MessageController {
         }
     }
 
+    /**
+     * Broadcast a message to all connected sessions.
+     *
+     * @param messageDto the message to send
+     */
     @PostMapping("/send")
     public void broadcastMessageToAllSessions(@RequestBody WebSocketDto messageDto) {
         try {
@@ -52,6 +71,11 @@ public class MessageController {
         }
     }
 
+    /**
+     * Send all messages from the message buffer to the given session.
+     *
+     * @param session the session to send the messages to
+     */
     public void sendMessagesFromMessageBufferToReconnectedSession(final WebSocketSession session) {
         try {
             for (WebSocketDto messageDto : messageBuffer) {

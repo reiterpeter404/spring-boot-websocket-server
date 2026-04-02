@@ -14,14 +14,15 @@ import org.springframework.web.socket.config.annotation.WebSocketHandlerRegistry
 @EnableWebSocket
 @AllArgsConstructor
 public class WebSocketConfig implements WebSocketConfigurer {
-    private final WebSocketAuthConfig webSocketAuthConfig;
+    private final WebSocketBasicAuthConfig webSocketBasicAuthConfig;
+    private final WebSocketTokenAuthConfig webSocketTokenAuthConfig;
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public void registerWebSocketHandlers(final WebSocketHandlerRegistry registry) {
         registry
                 .addHandler(tradeWebSocketHandler(), "/websocket")
-                .addInterceptors(new WebSocketAuthInterceptor(webSocketAuthConfig));
+                .addInterceptors(new WebSocketAuthInterceptor(webSocketBasicAuthConfig, webSocketTokenAuthConfig));
     }
 
     @Bean

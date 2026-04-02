@@ -1,8 +1,9 @@
 package com.websocket.server.interceptor;
 
-import com.websocket.server.config.WebSocketAuthConfig;
-import lombok.AllArgsConstructor;
+import com.websocket.server.config.WebSocketBasicAuthConfig;
+import com.websocket.server.config.WebSocketTokenAuthConfig;
 import lombok.NonNull;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpHeaders;
@@ -14,13 +15,14 @@ import org.springframework.web.socket.server.HandshakeInterceptor;
 import java.util.Base64;
 import java.util.Map;
 
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class WebSocketAuthInterceptor implements HandshakeInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketAuthInterceptor.class);
     private static final String BASIC = "Basic ";
     private static final String BEARER = "Bearer ";
 
-    private final WebSocketAuthConfig webSocketAuthConfig;
+    private final WebSocketBasicAuthConfig webSocketBasicAuthConfig;
+    private final WebSocketTokenAuthConfig webSocketTokenAuthConfig;
 
     /**
      * Invoked before the handshake is processed.
@@ -74,20 +76,20 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
     }
 
     private boolean validateJwtToken(final String authHeader) {
-        if (!webSocketAuthConfig.getEnableLoginWithToken()) {
+        if (!webSocketTokenAuthConfig.getEnableLoginWithToken()) {
             return false;
         }
 
         final String token = authHeader.substring(BEARER.length());
-        return webSocketAuthConfig.checkJwtToken(token);
+        return webSocketTokenAuthConfig.verify(token);
     }
 
     private boolean validateAuthenticationCredentials(final String authHeader) {
-        if (!webSocketAuthConfig.getEnableLoginWithCredentials()) {
+        if (!webSocketBasicAuthConfig.getEnableLoginWithCredentials()) {
             return false;
         }
         final String[] values = decodeAuthenticationCredentials(authHeader);
-        return webSocketAuthConfig.checkCredentials(values[0], values[1]);
+        return webSocketBasicAuthConfig.verify(values[0], values[1]);
     }
 
     private String[] decodeAuthenticationCredentials(final String authHeader) {

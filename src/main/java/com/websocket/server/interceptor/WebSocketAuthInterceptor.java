@@ -17,8 +17,21 @@ import java.util.Map;
 @AllArgsConstructor
 public class WebSocketAuthInterceptor implements HandshakeInterceptor {
     private static final Logger LOGGER = LoggerFactory.getLogger(WebSocketAuthInterceptor.class);
+    private static final String BASIC = "Basic ";
+    private static final String BEARER = "Bearer ";
+
     private final WebSocketAuthConfig webSocketAuthConfig;
 
+    /**
+     * Invoked before the handshake is processed.
+     *
+     * @param request    the current request
+     * @param response   the current response
+     * @param wsHandler  the target WebSocket handler
+     * @param attributes the attributes from the HTTP handshake to associate with the WebSocket
+     *                   session; the provided attributes are copied, the original map is not used.
+     * @return whether to proceed with the handshake ({@code true}) or abort ({@code false})
+     */
     @Override
     public boolean beforeHandshake(
             final ServerHttpRequest request,
@@ -26,27 +39,30 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
             @NonNull final WebSocketHandler wsHandler,
             @NonNull final Map<String, Object> attributes) {
         final String authHeader = request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
-        if (validateAuthenticationCredentials(authHeader) && webSocketAuthConfig.getEnableLoginWithCredentials()) {
-            return true;
+
+        if (authHeader == null) {
+            return false;
         }
+        if (authHeader.startsWith(BEARER)) {
+            return validateJwtToken(authHeader);
+        }
+        if (authHeader.startsWith(BASIC)) {
+            return validateAuthenticationCredentials(authHeader);
+        }
+
         LOGGER.error("Failed to authenticate client application.");
         return false;
     }
 
-    private boolean validateAuthenticationCredentials(final String authHeader) {
-        if (authHeader == null || !authHeader.startsWith("Basic ")) {
-            return false;
-        }
-        final String[] values = decodeAuthenticationCredentials(authHeader);
-        return webSocketAuthConfig.checkCredentials(values[0], values[1]);
-    }
-
-    private String[] decodeAuthenticationCredentials(final String authHeader) {
-        final String base64Credentials = authHeader.substring(6);
-        final String credentials = new String(Base64.getDecoder().decode(base64Credentials));
-        return credentials.split(":", 2);
-    }
-
+    /**
+     * Invoked after the handshake is done. The response status and headers indicate
+     * the results of the handshake, i.e. whether it was successful or not.
+     *
+     * @param request   the current request
+     * @param response  the current response
+     * @param wsHandler the target WebSocket handler
+     * @param exception an exception raised during the handshake, or {@code null} if none
+     */
     @Override
     public void afterHandshake(
             @NonNull final ServerHttpRequest request,
@@ -55,5 +71,28 @@ public class WebSocketAuthInterceptor implements HandshakeInterceptor {
             final Exception exception
     ) {
         // not needed for this example
+    }
+
+    private boolean validateJwtToken(final String authHeader) {
+        if (!webSocketAuthConfig.getEnableLoginWithToken()) {
+            return false;
+        }
+
+        final String token = authHeader.substring(BEARER.length());
+        return webSocketAuthConfig.checkJwtToken(token);
+    }
+
+    private boolean validateAuthenticationCredentials(final String authHeader) {
+        if (!webSocketAuthConfig.getEnableLoginWithCredentials()) {
+            return false;
+        }
+        final String[] values = decodeAuthenticationCredentials(authHeader);
+        return webSocketAuthConfig.checkCredentials(values[0], values[1]);
+    }
+
+    private String[] decodeAuthenticationCredentials(final String authHeader) {
+        final String base64Credentials = authHeader.substring(BASIC.length());
+        final String credentials = new String(Base64.getDecoder().decode(base64Credentials));
+        return credentials.split(":", 2);
     }
 }
